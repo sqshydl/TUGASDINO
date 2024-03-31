@@ -4,57 +4,131 @@ if (!gl) {
     console.error('WebGL not supported');
 }
 
-let positionY = 0;
+const aspectRatio = canvas.width / canvas.height;
+const dinoWidth = 0.1;
+const dinoHeight = 0.1;
+const groundHeight = 0.1;
+const gravity = 0.01;
+const jumpStrength = 0.125;
+let dinoX = 0; // Initialize dino's X position
+let dinoY = -0.5 + groundHeight + dinoHeight / 2;
 let velocityY = 0;
 let isJumping = false;
+let isMovingLeft = false;
+let isMovingRight = false;
 
 function jump() {
     if (!isJumping) {
-        velocityY = 0.2;
+        velocityY = jumpStrength;
         isJumping = true;
+    }
+}
+
+function moveDino(direction) {
+    const stepSize = 0.03; // Adjust the step size as needed
+    if (direction === 'right') {
+        dinoX += stepSize; // Move the dino to the right
+    } else if (direction === 'left') {
+        dinoX -= stepSize; // Move the dino to the left
+    }
+
+    // Ensure the dino stays within the canvas bounds
+    const maxDinoX = 1 - dinoWidth / 2;
+    const minDinoX = -1 + dinoWidth / 2;
+    if (dinoX > maxDinoX) {
+        dinoX = maxDinoX;
+    } else if (dinoX < minDinoX) {
+        dinoX = minDinoX;
     }
 }
 
 document.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
-        console.log('Spacebar Pressed')
+        event.preventDefault();
         jump();
+    } else if (event.code === 'ArrowRight') {
+        isMovingRight = true;
+    } else if (event.code === 'ArrowLeft') {
+        isMovingLeft = true;
     }
 });
+
+document.addEventListener('keyup', (event) => {
+    if (event.code === 'ArrowRight') {
+        isMovingRight = false;
+    } else if (event.code === 'ArrowLeft') {
+        isMovingLeft = false;
+    }
+});
+
+function update() {
+    if (isMovingRight) {
+        moveDino('right');
+    }
+    if (isMovingLeft) {
+        moveDino('left');
+    }
+
+    if (isJumping) {
+        dinoY += velocityY;
+        velocityY -= gravity;
+        if (dinoY <= -0.5 + groundHeight + dinoHeight / 2) {
+            dinoY = -0.5 + groundHeight + dinoHeight / 2;
+            isJumping = false;
+        }
+    }
+}
 
 function draw() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    if (isJumping) {
-        positionY += velocityY;
-        velocityY -= 0.01;
-        if (positionY <= 0) {
-            positionY = 0;
-            isJumping = false;
-        }
-    }
-
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    update();
+    drawDino();
+    drawGround();
 
     requestAnimationFrame(draw);
 }
 
-function initBuffers() {
+function drawDino() {
+    gl.viewport(0, 0, canvas.width, canvas.height);
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     const positions = [
-        -0.1, -0.5,
-        -0.1, 0.0,
-        0.1, -0.5,
-        0.1, 0.0,
+        dinoX - dinoWidth / 2, dinoY - dinoHeight / 2,
+        dinoX - dinoWidth / 2, dinoY + dinoHeight / 2,
+        dinoX + dinoWidth / 2, dinoY - dinoHeight / 2,
+        dinoX - dinoWidth / 2, dinoY + dinoHeight / 2,
+        dinoX + dinoWidth / 2, dinoY + dinoHeight / 2,
+        dinoX + dinoWidth / 2, dinoY - dinoHeight / 2,
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function drawGround() {
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    const positions = [
+        -1, -0.5,
+        -1, -0.5 + groundHeight,
+        1, -0.5,
+        -1, -0.5 + groundHeight,
+        1, -0.5 + groundHeight,
+        1, -0.5,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function createShader(gl, type, source) {
@@ -99,5 +173,4 @@ const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource
 const program = createProgram(gl, vertexShader, fragmentShader);
 gl.useProgram(program);
 
-initBuffers(); // Initialize buffers before drawing
 draw();

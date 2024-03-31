@@ -1,0 +1,19 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#container {
+    position: relative;
+}
+
+#gameCanvas {
+    width: 800px;
+    height: calc(800px * (9 / 16)); 
+    
+    border: 1px solid black; /* Optional: add a border for visualization */
+}
