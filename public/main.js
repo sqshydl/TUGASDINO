@@ -10,7 +10,7 @@ const dinoHeight = 0.1;
 const groundHeight = 0.1;
 const gravity = 0.01;
 const jumpStrength = 0.125;
-let dinoX = 0; // Initialize dino's X position
+let dinoX = 0;  
 let dinoY = -0.5 + groundHeight + dinoHeight / 2;
 let velocityY = 0;
 let isJumping = false;
@@ -25,14 +25,14 @@ function jump() {
 }
 
 function moveDino(direction) {
-    const stepSize = 0.03; // Adjust the step size as needed
+    const stepSize = 0.03; 
     if (direction === 'right') {
-        dinoX += stepSize; // Move the dino to the right
+        dinoX += stepSize; 
     } else if (direction === 'left') {
-        dinoX -= stepSize; // Move the dino to the left
+        dinoX -= stepSize;
     }
 
-    // Ensure the dino stays within the canvas bounds
+    
     const maxDinoX = 1 - dinoWidth / 2;
     const minDinoX = -1 + dinoWidth / 2;
     if (dinoX > maxDinoX) {
