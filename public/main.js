@@ -16,6 +16,15 @@ let velocityY = 0;
 let isJumping = false;
 let isMovingLeft = false;
 let isMovingRight = false;
+let isGameOver = false; 
+
+
+
+const obstacleWidth = 0.05;
+const obstacleHeight = 0.1;
+const obstacleSpeed = 0.01;
+let obstacleX = 1; 
+
 
 function jump() {
     if (!isJumping) {
@@ -32,7 +41,6 @@ function moveDino(direction) {
         dinoX -= stepSize;
     }
 
-    
     const maxDinoX = 1 - dinoWidth / 2;
     const minDinoX = -1 + dinoWidth / 2;
     if (dinoX > maxDinoX) {
@@ -83,9 +91,15 @@ function draw() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    update();
-    drawDino();
-    drawGround();
+    if (!isGameOver) { 
+        update();
+        drawDino();
+        drawGround();
+        updateObstacle();
+        drawObstacle();
+    } else {
+        displayGameOver();
+    }
 
     requestAnimationFrame(draw);
 }
@@ -130,6 +144,72 @@ function drawGround() {
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
+
+function updateObstacle() {
+    obstacleX -= obstacleSpeed;
+
+    
+    if (obstacleX < dinoX + dinoWidth / 2 &&
+        obstacleX + obstacleWidth > dinoX - dinoWidth / 2 &&
+        dinoY + dinoHeight / 2 > -0.5 + groundHeight && 
+        dinoY - dinoHeight / 2 < -0.5 + groundHeight + obstacleHeight) { 
+        
+        console.log('Collision occurred!');
+        isGameOver = true; 
+    }
+
+    
+    if (obstacleX + obstacleWidth < -1) {
+        obstacleX = 1;
+    }
+}
+
+
+function displayGameOver() {
+   
+    gl.clearColor(0.8, 0, 0, 1.0); 
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    console.log('Game Over!');
+}
+
+function resetGame() {
+    dinoX = 0; 
+    dinoY = -0.5 + groundHeight + dinoHeight / 2;
+    velocityY = 0;
+    isJumping = false;
+    isGameOver = false;
+
+    obstacleX = 1; 
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.code === 'Space' && isGameOver) { 
+        resetGame();
+    } 
+});
+
+function drawObstacle() {
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    const positions = [
+        obstacleX, -0.5 + groundHeight,
+        obstacleX, -0.5 + groundHeight + obstacleHeight,
+        obstacleX + obstacleWidth, -0.5 + groundHeight,
+        obstacleX, -0.5 + groundHeight + obstacleHeight,
+        obstacleX + obstacleWidth, -0.5 + groundHeight + obstacleHeight,
+        obstacleX + obstacleWidth, -0.5 + groundHeight,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+
 
 function createShader(gl, type, source) {
     const shader = gl.createShader(type);
