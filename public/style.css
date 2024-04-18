@@ -12,8 +12,8 @@ body, html {
 }
 
 #gameCanvas {
-    width: 800px;
-    height: calc(800px * (9 / 16)); 
-    
+    width: 800px; /* Atur lebar kanvas */
+    height: calc(800px * (9 / 16)); /* Hitung tinggi untuk menjaga rasio aspek 16:9 */
     border: 1px solid black; 
+    image-rendering: pixelated; /* Gunakan rendering pixelated untuk tepi yang lebih tajam */
 }
